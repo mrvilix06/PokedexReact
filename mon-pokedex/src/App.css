@@ -1,0 +1,143 @@
+*, ::before, ::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #333;
+  font-family: 'Arial', Arial, Helvetica, sans-serif;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  padding: 25px 0;
+  color: #f1f1f1;
+}
+
+.recherche-poke {
+  max-width: 700px;
+  min-width: 450px;
+  width: 70%;
+  margin: 30px auto;
+  position: relative;
+  display: flex;
+}
+
+.inp-group {
+  width: 100%;
+  position: relative;
+}
+
+.recherche-poke input {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+  font-size: 20px;
+}
+
+.recherche-poke label {
+    position: absolute;
+    color: #333;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    padding-left: 8px;
+    transition: all 0.3s ease;
+}
+
+.recherche-poke button {
+    margin-left: 5px;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.recherche-poke:focus-within label,
+.recherche-poke.active-input label {
+    top: -15px;
+    padding-left: -5px;
+    color: #f1f1f1;
+}
+
+.container {
+  max-width: 1100px;
+  min-width: 450px;
+  width: 70%;
+  margin: 30px auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.liste-poke li {
+    width: 200px;
+    height: 200px;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f1f1f1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.liste-poke h5 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.liste-poke img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+}
+
+.liste-poke li:hover {
+    transform: scale(1.1);
+    background-color: #333;
+}
+
+.liste-poke p {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.loader {
+  position: absolute;
+  top: 250px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader img {
+  animation: rotatePokeball 2s linear infinite;
+  width: 200px;
+  height: 200px;
+}
+
+
+@keyframes rotatePokeball {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
