@@ -99,7 +99,6 @@ useEffect(() => {
 
 
   const handleSearch = (string, results) => {
-    setSearchTerm(string);
     if (index < 151) {
       fetchAllPokemon();
     }
