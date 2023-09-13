@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
+import {ReactSearchAutocomplete} from 'react-search-autocomplete';
 
 const types = {
   grass: '#78c850',
@@ -23,6 +24,7 @@ const types = {
 function App() {
   const [displayedPokemon, setDisplayedPokemon] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [index, setIndex] = useState(0);
@@ -30,7 +32,10 @@ function App() {
 
 useEffect(() => {
     fetchPokemonBase();
+    setIsFirstLoad(false);
   }, []);
+
+
 
   const handleScroll = () => {
     const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
@@ -48,12 +53,12 @@ useEffect(() => {
     setIsLoading(true);
     setError(null);
     try {
-      if(index > 151) return;
-      const response = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=${index}&limit=20`);
+      if(index >= 151) return;
+      const response = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=${index}&limit=40`);
       const data = await response.json();
       const newPokemon = await Promise.all(data.results.map(fetchPokemonComplet));
       setDisplayedPokemon(prev => [...prev, ...newPokemon]);
-      setIndex(prevIndex => prevIndex + 20);
+      setIndex(prevIndex => prevIndex + 40);
     } catch (error) {
       setError(error);
     } finally {
@@ -73,28 +78,68 @@ useEffect(() => {
     };
   };
 
-  const handleSearch = useCallback((e) => {
-    setSearchTerm(e.target.value);
-  }, []);
+  const fetchAllPokemon = async () => {
+    if (index >= 151) return;
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=151`);
+      const data = await response.json();
+      const newPokemon = await Promise.all(data.results.map(fetchPokemonComplet));
+      setDisplayedPokemon([...newPokemon]);
+      setIndex(151);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+
+  const handleSearch = (string, results) => {
+    setSearchTerm(string);
+    if (index < 151) {
+      fetchAllPokemon();
+    }
+  };
+
+  const formatResult = (item) => {
+    return (
+      <>
+      <span>
+        <span style={{ display: 'grid', textAlign: 'left' }}>id: {item.id}</span>
+        <span style={{ display: 'grid', textAlign: 'left' }}>name: {item.name}</span>
+      </span>
+      </>
+    )
+  }
+
 
   return (
     <div className="App">
     <h1>Pokedex</h1>
-    <form className="recherche-poke">
-      <label htmlFor="recherche">Rechercher un pokémon</label>
-      <input type="text" id="recherche" value={searchTerm} onChange={handleSearch} />
-    </form>
-    <div className="container">
-      <ul className="liste-poke">
-        {displayedPokemon.map((poke, index) => (
-          <li key={poke.id} style={{ background: types[poke.type] }}>
-            <img src={poke.pic} alt={poke.name} />
-            <h5>{poke.name}</h5>
-            <p>ID# {poke.id}</p>
-          </li>
-        ))}
-      </ul>
+    <div className='recherche-poke'>
+        <ReactSearchAutocomplete
+          items={displayedPokemon}
+          onSearch={handleSearch}
+          onFocus={() => { console.log('Focused')}} //TODO
+          onSelect={(item) => console.log(item)} //TODO
+          formatResult={formatResult}
+        />
     </div>
+    {!isFirstLoad && <div className="container">
+        <ul className="liste-poke">
+      {displayedPokemon.map((poke) => (
+        <li key={poke.id} style={{ background: types[poke.type] }}>
+          <img src={poke.pic} alt={poke.name} />
+          <h5>{poke.name}</h5>
+          <p>ID# {poke.id}</p>
+        </li>
+      ))}
+    </ul>
+    </div>}
     {isLoading && <div className="loader">
       <img src="pokeball.png" alt="pokeball" />
     </div>}
