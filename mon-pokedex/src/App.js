@@ -32,7 +32,7 @@ function App() {
 
 
 useEffect(() => {
-    fetchPokemonBase();
+    fetchPokemonBase(25);
     setIsFirstLoad(false);
   }, []);
 
@@ -41,7 +41,7 @@ useEffect(() => {
   const handleScroll = () => {
     const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
     if (clientHeight + scrollTop >= scrollHeight - 20 && !isLoading) {
-      fetchPokemonBase();
+      fetchPokemonBase(25);
     }
   };
 
@@ -50,18 +50,27 @@ useEffect(() => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isLoading]);
 
-  const fetchPokemonBase = async () => {
+  const fetchPokemonBase = async (limit) => {
     setIsLoading(true);
     setError(null);
     try {
       if(index >= 151) return;
-      const response = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=${index}&limit=25`);
+      const response = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=${index}&limit=${limit}`);
       const data = await response.json();
       const newPokemon = await Promise.all(data.results.map(fetchPokemonComplet));
-      const filteredPokemon = _.remove(newPokemon, function(n) {
+      const filteredPokemon = _.filter(newPokemon, function(n) {
         return n.id <= 151;
       });
-      setDisplayedPokemon(prev => [...prev, ...filteredPokemon]);
+
+      const pokemonFr = await Promise.all(
+        filteredPokemon.map(async (pokemon) => {
+          const response = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon.name}`);
+          const pokeData = await response.json();
+          pokemon.name = pokeData.names[4].name;
+          return pokemon;
+        })
+      );
+      setDisplayedPokemon(prev => [...prev, ...pokemonFr]);
       setIndex(prevIndex => prevIndex + 25);
     } catch (error) {
       setError(error);
@@ -90,8 +99,16 @@ useEffect(() => {
     try {
       const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=151`);
       const data = await response.json();
-      const newPokemon = await Promise.all(data.results.map(fetchPokemonComplet));
-      setDisplayedPokemon([...newPokemon]);
+      const allPokemon = await Promise.all(data.results.map(fetchPokemonComplet));
+      const allPokemonFr = await Promise.all(
+        allPokemon.map(async (pokemon) => {
+          const response = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon.name}`);
+          const pokeData = await response.json();
+          pokemon.name = pokeData.names[4].name;
+          return pokemon;
+        })
+      );
+      setDisplayedPokemon([...allPokemonFr]);
       setIndex(151);
     } catch (error) {
       setError(error);
@@ -99,8 +116,6 @@ useEffect(() => {
       setIsLoading(false);
     }
   };
-
-
 
   const handleSearch = (string, results) => {
     if (index < 151) {
