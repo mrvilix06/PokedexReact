@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import {ReactSearchAutocomplete} from 'react-search-autocomplete';
+import _ from 'lodash';
 
 const types = {
   grass: '#78c850',
@@ -26,7 +27,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPokemon, setSelectedPokemon] = useState(null);
   const [index, setIndex] = useState(0);
 
 
@@ -54,11 +55,14 @@ useEffect(() => {
     setError(null);
     try {
       if(index >= 151) return;
-      const response = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=${index}&limit=40`);
+      const response = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=${index}&limit=25`);
       const data = await response.json();
       const newPokemon = await Promise.all(data.results.map(fetchPokemonComplet));
-      setDisplayedPokemon(prev => [...prev, ...newPokemon]);
-      setIndex(prevIndex => prevIndex + 40);
+      const filteredPokemon = _.remove(newPokemon, function(n) {
+        return n.id <= 151;
+      });
+      setDisplayedPokemon(prev => [...prev, ...filteredPokemon]);
+      setIndex(prevIndex => prevIndex + 25);
     } catch (error) {
       setError(error);
     } finally {
@@ -107,13 +111,18 @@ useEffect(() => {
   const formatResult = (item) => {
     return (
       <>
-      <span>
-        <span style={{ display: 'grid', textAlign: 'left' }}>id: {item.id}</span>
-        <span style={{ display: 'grid', textAlign: 'left' }}>name: {item.name}</span>
-      </span>
+      <div>
+        <img src={item.pic} alt={item.name} />
+        <span style={{ display: 'grid', textAlign: 'left' }}>{item.name}</span>
+      </div>
       </>
     )
   }
+
+  const handleOnSelect = (item) => {
+    setSelectedPokemon(item);
+  };
+
 
 
   return (
@@ -123,13 +132,25 @@ useEffect(() => {
         <ReactSearchAutocomplete
           items={displayedPokemon}
           onSearch={handleSearch}
-          onFocus={() => { console.log('Focused')}} //TODO
-          onSelect={(item) => console.log(item)} //TODO
+          onFocus={() => {setSelectedPokemon(null)}}
+          onSelect={handleOnSelect}
           formatResult={formatResult}
+          onClear={() => {setSelectedPokemon(null)}}
         />
     </div>
-    {!isFirstLoad && <div className="container">
-        <ul className="liste-poke">
+    {!isFirstLoad && selectedPokemon ? (
+  <div className="container">
+    <ul className="liste-poke">
+      <li style={{ background: types[selectedPokemon.type] }}>
+        <img src={selectedPokemon.pic} alt={selectedPokemon.name} />
+        <h5>{selectedPokemon.name}</h5>
+        <p>ID# {selectedPokemon.id}</p>
+      </li>
+    </ul>
+  </div>
+) : (
+  <div className="container">
+    <ul className="liste-poke">
       {displayedPokemon.map((poke) => (
         <li key={poke.id} style={{ background: types[poke.type] }}>
           <img src={poke.pic} alt={poke.name} />
@@ -138,7 +159,8 @@ useEffect(() => {
         </li>
       ))}
     </ul>
-    </div>}
+  </div>
+)}
     {isLoading && <div className="loader">
       <img src="pokeball.png" alt="pokeball" />
     </div>}
